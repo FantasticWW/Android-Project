@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+        <LinearLayout
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/bg_dialog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="更新头像"
+                android:textColor="#999999"
+                android:textSize="20sp"
+
+                />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#cccccc" />
+
+            <TextView
+                android:id="@+id/tv_content_one"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/selector_text"
+                android:gravity="center"
+                android:text="拍照"
+                android:textColor="#333333"
+                android:textSize="20sp" />
+
+            <View
+                android:id="@+id/v_line"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#cccccc" />
+
+
+
+            <TextView
+                android:background="@drawable/selector_text"
+                android:id="@+id/tv_content_two"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="从相册中选择"
+                android:textColor="#333333"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+
+
+
+    <TextView
+        android:layout_marginTop="20dp"
+        android:background="@drawable/selector_text"
+        android:id="@+id/tv_chose"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="确定"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:textColor="#333333"
+        android:textSize="20sp" />
+
+</LinearLayout>
