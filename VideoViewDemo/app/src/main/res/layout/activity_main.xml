@@ -4,13 +4,14 @@
     android:layout_height="match_parent">
 
     <RelativeLayout
+        android:id="@+id/vedioview_layout"
         android:layout_width="match_parent"
-        android:layout_height="240dp">
+        android:layout_height="250dp">
 
         <VideoView
             android:id="@+id/vedioview"
             android:layout_width="match_parent"
-            android:layout_height="240dp" />
+            android:layout_height="250dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,15 +20,15 @@
             android:orientation="vertical">
 
             <SeekBar
-                android:paddingStart="0dp"
-                android:paddingLeft="0dp"
-                android:paddingRight="0dp"
-                android:paddingEnd="0dp"
                 android:id="@+id/seek_progress"
                 android:layout_width="match_parent"
                 android:layout_height="5dp"
                 android:indeterminate="false"
                 android:max="100"
+                android:paddingEnd="0dp"
+                android:paddingLeft="0dp"
+                android:paddingRight="0dp"
+                android:paddingStart="0dp"
                 android:progressDrawable="@drawable/seekbar_style"
                 android:thumb="@null" />
 
@@ -38,19 +39,20 @@
                 android:background="#101010">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:id="@+id/control_layout"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:src="@drawable/pause_btn_sylte"
                         android:id="@+id/img_play_control"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginLeft="16dp"
                         android:layout_marginStart="16dp"
-                        android:contentDescription="@string/app_name" />
+                        android:contentDescription="@string/app_name"
+                        android:src="@drawable/pause_btn_sylte" />
 
                     <TextView
                         android:id="@+id/txt_current_time"
@@ -90,7 +92,11 @@
                     android:layout_height="match_parent"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentRight="true"
-                    android:gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_toEndOf="@id/control_layout"
+                    android:layout_toRightOf="@id/control_layout"
+                    android:gravity="center_vertical|end"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -100,21 +106,28 @@
                         android:src="@drawable/volume" />
 
                     <SeekBar
-                        android:paddingStart="0dp"
-                        android:paddingLeft="0dp"
-                        android:paddingRight="0dp"
-                        android:paddingEnd="0dp"
                         android:id="@+id/seek_volum"
                         android:layout_width="100dp"
-                        android:layout_height="5dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginLeft="6dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="6dp"
                         android:indeterminate="false"
                         android:max="100"
+                        android:paddingEnd="0dp"
+                        android:paddingLeft="0dp"
+                        android:paddingRight="0dp"
+                        android:paddingStart="0dp"
                         android:progressDrawable="@drawable/volum_seekbar_style"
-                        android:thumb="@null" />
+                        android:thumb="@drawable/thumb_seekbar"
+                        android:thumbOffset="0dp" />
 
                     <View
                         android:layout_width="1dp"
                         android:layout_height="match_parent"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
                         android:background="#1e1e1e" />
 
                     <ImageView
