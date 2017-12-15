@@ -10,10 +10,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
@@ -24,7 +28,7 @@ import android.widget.VideoView;
 public class MainActivity extends AppCompatActivity {
     private static String URL = "http://fairee.vicp.net:83/2016rm/0116/baishi160116.mp4";
     private static int UPDATE = 0;
-    private VideoView videoView;
+    private CustomVideoView videoView;
     private ImageView imgPlayControl; //暂停
     private SeekBar seekProgress; //进度条
     private SeekBar seekVolum;//音量条
@@ -37,7 +41,18 @@ public class MainActivity extends AppCompatActivity {
     private RelativeLayout videoLayout;
     private int currPosition;//当前视频播放位置
     private boolean isFullScreen;//是否全屏
-
+    private boolean isLogical;//是否合法
+    private int threshold = 53;//滑动的临界值
+    private int maxVolum;
+    private int curVolum;
+    private float brightness;
+    private float lastX = 0;
+    private float lastY = 0;
+    private String TAG = "MainActivity";
+    private int touchRang;
+    private ImageView imgControl;
+    private SeekBar seekControl;
+    private FrameLayout includeLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
         txtCurrTime = findViewById(R.id.txt_current_time);
         txtTotalTime = findViewById(R.id.txt_total_time);
         videoLayout = findViewById(R.id.vedioview_layout);
+        imgControl = findViewById(R.id.img_control);
+        seekControl = findViewById(R.id.seek_control);
+        includeLayout = findViewById(R.id.include_layout);
     }
 
     private void initData() {
@@ -69,10 +87,10 @@ public class MainActivity extends AppCompatActivity {
 
         //音量初始化
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int maxVolum = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int currVolum = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        maxVolum = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        curVolum = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         seekVolum.setMax(maxVolum);
-        seekVolum.setProgress(currVolum);
+        seekVolum.setProgress(curVolum);
 
         //获取屏幕的宽度
         WindowManager manager = getWindowManager();
@@ -129,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
 
     private void setPlayEvent() {
         /**
@@ -215,7 +232,93 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        /**
+         * 屏幕音量的控制
+         */
+        videoView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN://手指按下
+                        includeLayout.setVisibility(View.VISIBLE);
+                        //1.按下记录值
+                        lastY = event.getY();
+                        lastX = event.getX();
+                        curVolum = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                        touchRang = Math.min(screenHeight, screenWidth);//screenHeight
+                        break;
+                    case MotionEvent.ACTION_MOVE://手指移动
+                        //2.移动的记录相关值
+                        float endY = event.getY();
+                        float endX = event.getX();
+                        float distanceY = lastY - endY;
+
+                        if (endX < screenWidth / 2) {
+                            //左边屏幕-调节亮度
+                            final double FLING_MIN_DISTANCE = 0.5;
+                            final double FLING_MIN_VELOCITY = 0.5;
+                            seekControl.setMax(100);
+                            if (distanceY > FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+                                setBrightness(10);
+                            }
+                            if (distanceY < FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+                                setBrightness(-10);
+                            }
+                        } else {
+                            //右边屏幕-调节声音
+                            //改变声音 = （滑动屏幕的距离： 总距离）*音量最大值
+                            float delta = (distanceY / touchRang) * maxVolum;
+                            //最终声音 = 原来的 + 改变声音；
+                            int voice = (int) Math.min(Math.max(curVolum + delta, 0), maxVolum);
+                            if (delta != 0) {
+                                seekControl.setMax(maxVolum);
+                                seekControl.setProgress(curVolum);
+                                updateVoice(voice);
+                            }
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP://手指离开
+                        includeLayout.setVisibility(View.GONE);
+                        break;
+                }
+                return true;
+            }
+        });
     }
+
+    private void updateVoice(int progress) {
+        imgControl.setImageResource(R.drawable.volum);
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+        seekVolum.setProgress(progress);
+        curVolum = progress;
+        seekControl.setProgress(progress);
+    }
+
+    /*
+ *
+ * 设置屏幕亮度 lp = 0 全暗 ，lp= -1,根据系统设置， lp = 1; 最亮
+ *
+    屏幕最大亮度为255。
+    屏幕最低亮度为0。
+    屏幕亮度值范围必须位于：0～255。
+
+ *
+ */
+    public void setBrightness(float brightness) {
+        imgControl.setImageResource(R.drawable.bright);
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+
+        lp.screenBrightness = lp.screenBrightness + brightness / 255.0f;
+        Log.d(TAG, "setBrightness: " + lp.screenBrightness);
+        if (lp.screenBrightness > 1) {
+            lp.screenBrightness = 1;
+        } else if (lp.screenBrightness < 0.1) {
+            lp.screenBrightness = (float) 0.1;
+        }
+        getWindow().setAttributes(lp);
+        seekControl.setProgress((int) (lp.screenBrightness*100));//以100为值计算
+    }
+
 
     /**
      * 设置缩放比例
@@ -232,21 +335,28 @@ public class MainActivity extends AppCompatActivity {
         videoLayout.setLayoutParams(layoutParams1);
     }
 
-
     /**
      * 控制屏幕显示的大小
      */
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        //横盘
+        //横屏
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setVedioViewScale(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             isFullScreen = true;
+            //移除半屏状态
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            //添加全屏状态
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         } else {
             //竖屏
             setVedioViewScale(ViewGroup.LayoutParams.MATCH_PARENT, dp2px(250));
             isFullScreen = false;
+            //移除全屏状态
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            //添加半屏状态
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         }
     }
 
@@ -270,7 +380,6 @@ public class MainActivity extends AppCompatActivity {
         }
         seekVolum.setProgress(currVolum);
         return super.onKeyDown(keyCode, event);
-
     }
 
     /**
