@@ -240,40 +240,66 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN://手指按下
-                        includeLayout.setVisibility(View.VISIBLE);
+
                         //1.按下记录值
                         lastY = event.getY();
                         lastX = event.getX();
                         curVolum = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                         touchRang = Math.min(screenHeight, screenWidth);//screenHeight
+                        includeLayout.setVisibility(View.VISIBLE);
+
+                        if (lastX < screenWidth / 2) {
+                            imgControl.setImageResource(R.drawable.bright);
+                            seekControl.setProgress(curVolum);
+                        } else {
+                            imgControl.setImageResource(R.drawable.volum);
+                            seekControl.setProgress((int) (getWindow().getAttributes().screenBrightness*100));
+                        }
                         break;
                     case MotionEvent.ACTION_MOVE://手指移动
                         //2.移动的记录相关值
                         float endY = event.getY();
                         float endX = event.getX();
                         float distanceY = lastY - endY;
-
-                        if (endX < screenWidth / 2) {
-                            //左边屏幕-调节亮度
-                            final double FLING_MIN_DISTANCE = 0.5;
-                            final double FLING_MIN_VELOCITY = 0.5;
-                            seekControl.setMax(100);
-                            if (distanceY > FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
-                                setBrightness(10);
+                        float distanceX = lastX - endX;
+                        float absY = Math.abs(distanceY);
+                        float absX = Math.abs(distanceX);
+                        if (absX > threshold && absY > threshold) {//斜向滑动
+                            if (absX > absY) {
+                                isLogical = false;
+                            } else {
+                                isLogical = true;
                             }
-                            if (distanceY < FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
-                                setBrightness(-10);
-                            }
-                        } else {
-                            //右边屏幕-调节声音
-                            //改变声音 = （滑动屏幕的距离： 总距离）*音量最大值
-                            float delta = (distanceY / touchRang) * maxVolum;
-                            //最终声音 = 原来的 + 改变声音；
-                            int voice = (int) Math.min(Math.max(curVolum + delta, 0), maxVolum);
-                            if (delta != 0) {
-                                seekControl.setMax(maxVolum);
-                                seekControl.setProgress(curVolum);
-                                updateVoice(voice);
+                        } else if (absX < threshold && absY > threshold) {
+                            isLogical = true;
+                        } else if (absX > threshold && absY < threshold) {
+                            isLogical = false;
+                        }
+                        if (isLogical) {
+                            if (endX < screenWidth / 2) {
+                                imgControl.setImageResource(R.drawable.bright);
+                                //左边屏幕-调节亮度
+                                final double FLING_MIN_DISTANCE = 0.5;
+                                final double FLING_MIN_VELOCITY = 0.5;
+                                seekControl.setMax(100);//设置最大值为100
+                                if (distanceY > FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+                                    setBrightness(10);
+                                }
+                                if (distanceY < FLING_MIN_DISTANCE && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+                                    setBrightness(-10);
+                                }
+                            } else {
+                                imgControl.setImageResource(R.drawable.volum);
+                                //右边屏幕-调节声音
+                                //改变声音 = （滑动屏幕的距离： 总距离）*音量最大值
+                                float delta = (distanceY / touchRang) * maxVolum;
+                                //最终声音 = 原来的 + 改变声音；
+                                int voice = (int) Math.min(Math.max(curVolum + delta, 0), maxVolum);
+                                if (delta != 0) {
+                                    seekControl.setMax(maxVolum);
+                                    seekControl.setProgress(curVolum);
+                                    updateVoice(voice);
+                                }
                             }
                         }
                         break;
@@ -287,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateVoice(int progress) {
-        imgControl.setImageResource(R.drawable.volum);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
         seekVolum.setProgress(progress);
         curVolum = progress;
@@ -305,18 +330,16 @@ public class MainActivity extends AppCompatActivity {
  *
  */
     public void setBrightness(float brightness) {
-        imgControl.setImageResource(R.drawable.bright);
         WindowManager.LayoutParams lp = getWindow().getAttributes();
 
-        lp.screenBrightness = lp.screenBrightness + brightness / 255.0f;
-        Log.d(TAG, "setBrightness: " + lp.screenBrightness);
+        lp.screenBrightness = lp.screenBrightness + brightness / 255.0f; //当前亮度+ 滑动值/255
         if (lp.screenBrightness > 1) {
             lp.screenBrightness = 1;
         } else if (lp.screenBrightness < 0.1) {
             lp.screenBrightness = (float) 0.1;
         }
         getWindow().setAttributes(lp);
-        seekControl.setProgress((int) (lp.screenBrightness*100));//以100为值计算
+        seekControl.setProgress((int) (lp.screenBrightness * 100));//以100为值计算
     }
 
 
